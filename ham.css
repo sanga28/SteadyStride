@@ -1,0 +1,23 @@
+body {
+  width: 100vw;
+  height: 100vh;
+  background-image: url(./homescreennew.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+div {
+  margin-top: 20vw;
+}
+a {
+  font-size: 5vw;
+  font-weight: 600;
+  text-decoration: none;
+  color: rgb(41, 101, 41);
+  border: 2px solid rgb(41, 101, 41);
+  padding: 10px;
+  border-radius: 50px;
+}

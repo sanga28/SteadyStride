@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SteadyStride Tremor Monitor</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --success-color: #4CAF50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #1a237e;
+            padding: 20px;
+            color: white;
+        }
+
+        .main-content {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .status-dot.connected {
+            background: var(--success-color);
+            box-shadow: 0 0 10px var(--success-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 5px;
+        }
+
+        .btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .data-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .data-item:hover {
+            transform: scale(1.05);
+        }
+
+        .data-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .data-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .tremor-stage {
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--primary-color);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .tremor-indicator {
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .stage-0 { background: #4CAF50; color: white; }
+        .stage-1 { background: #FFC107; color: black; }
+        .stage-2 { background: #FF9800; color: white; }
+        .stage-3 { background: #f44336; color: white; }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .data-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <h2>SteadyStride Monitor</h2>
+            <div class="connection-status">
+                <div class="status-dot" id="connectionDot"></div>
+                <span id="connectionStatus">Disconnected</span>
+            </div>
+            <button class="btn" id="connectButton">
+                <i class="fas fa-bluetooth"></i>
+                Connect Device
+            </button>
+            <br><br>
+            <button  class="btn" id="connectButton">
+                <a style="text-decoration: none; color: white;" href="home.html">Home Page</a>
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h3>Current Tremor Stage</h3>
+                <div class="tremor-indicator" id="tremorStageIndicator">
+                    Stage: 0 - Normal
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Accelerometer Data</h3>
+                <div class="data-grid">
+                    <div class="data-item">
+                        <div class="data-label">X-Axis</div>
+                        <div class="data-value" id="xValue">0.00</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Y-Axis</div>
+                        <div class="data-value" id="yValue">0.00</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Z-Axis</div>
+                        <div class="data-value" id="zValue">0.00</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Magnitude</div>
+                        <div class="data-value" id="magnitudeValue">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Real-time Graph</h3>
+                <div class="chart-container">
+                    <canvas id="accelerationChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Magnitude History</h3>
+                <div class="chart-container">
+                    <canvas id="magnitudeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let bluetoothDevice;
+        let accelerationChart;
+        let magnitudeChart;
+        const maxDataPoints = 50;
+        const dataHistory = {
+            x: Array(maxDataPoints).fill(0),
+            y: Array(maxDataPoints).fill(0),
+            z: Array(maxDataPoints).fill(0),
+            magnitude: Array(maxDataPoints).fill(0),
+            labels: Array(maxDataPoints).fill('')
+        };
+
+        // Initialize Charts
+        function initializeCharts() {
+            const accCtx = document.getElementById('accelerationChart').getContext('2d');
+            const magCtx = document.getElementById('magnitudeChart').getContext('2d');
+
+            accelerationChart = new Chart(accCtx, {
+                type: 'line',
+                data: {
+                    labels: dataHistory.labels,
+                    datasets: [{
+                        label: 'X-Axis',
+                        data: dataHistory.x,
+                        borderColor: '#f44336',
+                        tension: 0.4
+                    }, {
+                        label: 'Y-Axis',
+                        data: dataHistory.y,
+                        borderColor: '#4CAF50',
+                        tension: 0.4
+                    }, {
+                        label: 'Z-Axis',
+                        data: dataHistory.z,
+                        borderColor: '#2196F3',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMin: -4,
+                            suggestedMax: 4
+                        }
+                    }
+                }
+            });
+
+            magnitudeChart = new Chart(magCtx, {
+                type: 'line',
+                data: {
+                    labels: dataHistory.labels,
+                    datasets: [{
+                        label: 'Magnitude',
+                        data: dataHistory.magnitude,
+                        borderColor: '#9C27B0',
+                        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMin: 0,
+                            suggestedMax: 4
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update tremor stage indicator
+        function updateTremorStage(magnitude) {
+            const indicator = document.getElementById('tremorStageIndicator');
+            let stage, description, className;
+
+            if (magnitude < 1.1) {
+                stage = 0;
+                description = "Normal";
+                className = "stage-0";
+            } else if (magnitude >= 1.1 && magnitude <= 1.6) {
+                stage = 1;
+                description = "Mild Tremor";
+                className = "stage-1";
+            } else if (magnitude > 1.6 && magnitude <= 1.9) {
+                stage = 2;
+                description = "Moderate Tremor";
+                className = "stage-2";
+            } else {
+                stage = 3;
+                description = "Severe Tremor";
+                className = "stage-3";
+            }
+
+            indicator.className = "tremor-indicator " + className;
+            indicator.textContent = Stage ${stage} - ${description};
+        }
+
+        // Update data display and charts
+        function updateData(x, y, z, magnitude) {
+            // Update numeric display
+            document.getElementById('xValue').textContent = x.toFixed(3);
+            document.getElementById('yValue').textContent = y.toFixed(3);
+            document.getElementById('zValue').textContent = z.toFixed(3);
+            document.getElementById('magnitudeValue').textContent = magnitude.toFixed(3);
+
+            // Update tremor stage
+            updateTremorStage(magnitude);
+
+            // Update chart data
+            dataHistory.x.shift();
+            dataHistory.y.shift();
+            dataHistory.z.shift();
+            dataHistory.magnitude.shift();
+            dataHistory.labels.shift();
+
+            dataHistory.x.push(x);
+            dataHistory.y.push(y);
+            dataHistory.z.push(z);
+            dataHistory.magnitude.push(magnitude);
+            dataHistory.labels.push(new Date().toLocaleTimeString());
+
+            accelerationChart.update();
+            magnitudeChart.update();
+        }
+
+        // BLE Connection
+async function connectToDevice() {
+    try {
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ name: 'Steadystride' }],
+            optionalServices: ['19b10000-e8f2-537e-4f6c-d104768a1214'] // Standard UUID format
+        });
+
+        const server = await bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('19b10000-e8f2-537e-4f6c-d104768a1214');
+
+        // Get all characteristics with proper UUIDs
+        const xCharacteristic = await service.getCharacteristic('19b10001-e8f2-537e-4f6c-d104768a1214');
+        const yCharacteristic = await service.getCharacteristic('19b10002-e8f2-537e-4f6c-d104768a1214');
+        const zCharacteristic = await service.getCharacteristic('19b10003-e8f2-537e-4f6c-d104768a1214');
+        const magnitudeCharacteristic = await service.getCharacteristic('19b10004-e8f2-537e-4f6c-d104768a1214');
+
+        // Start notifications for all characteristics
+        await xCharacteristic.startNotifications();
+        await yCharacteristic.startNotifications();
+        await zCharacteristic.startNotifications();
+        await magnitudeCharacteristic.startNotifications();
+
+        // Add event listeners
+        let currentX = 0, currentY = 0, currentZ = 0, currentMagnitude = 0;
+
+        xCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+            currentX = event.target.value.getFloat32(0, true);
+            updateData(currentX, currentY, currentZ, currentMagnitude);
+        });
+
+        yCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+            currentY = event.target.value.getFloat32(0, true);
+            updateData(currentX, currentY, currentZ, currentMagnitude);
+        });
+
+        zCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+            currentZ = event.target.value.getFloat32(0, true);
+            updateData(currentX, currentY, currentZ, currentMagnitude);
+        });
+
+        magnitudeCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+            currentMagnitude = event.target.value.getFloat32(0, true);
+            updateData(currentX, currentY, currentZ, currentMagnitude);
+        });
+
+        document.getElementById('connectionDot').classList.add('connected');
+        document.getElementById('connectionStatus').textContent = 'Connected';
+        document.getElementById('connectButton').style.display = 'none';
+
+    } catch (error) {
+        console.error('Bluetooth Error:', error);
+        alert('Bluetooth connection failed: ' + error);
+    }
+}
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharts();
+            document.getElementById('connectButton').addEventListener('click', connectToDevice);
+        });
+    </script>
+</body>
+</html>
