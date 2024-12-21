@@ -1,1 +1,4 @@
-At the forefront of healthcare innovation, we are transforming tremor management with our Wearable IoT-Based Anti-Tremor Band. This advanced device uses cutting-edge sensor technology and machine learning algorithms to detect and reduce tremors. By applying targeted pressure to nerves, it helps users regain control and freedom. Continuously monitoring tremor patterns, it provides real-time, personalized relief, empowering individuals to lead vibrant, independent lives.
+Wearable IoT-Based Anti-Tremor Band Website
+This repository contains the source code for the official website of the Wearable IoT-Based Anti-Tremor Band, a revolutionary healthcare solution designed to enhance the quality of life for individuals affected by tremors.
+
+The website serves as a central hub for device information, user interaction, and real-time data management, providing users with insights and tools to maximize the benefits of the anti-tremor band.
