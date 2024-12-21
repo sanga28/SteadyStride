@@ -1,4 +1,4 @@
-Wearable IoT-Based Anti-Tremor Band Website
+# Wearable IoT-Based Anti-Tremor Band Website
 
 This repository contains the source code for the official website of the Wearable IoT-Based Anti-Tremor Band, a revolutionary healthcare solution designed to enhance the quality of life for individuals affected by tremors.
 
